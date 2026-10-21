@@ -4,15 +4,19 @@
 
 需要 Linux、Python 3.10+、NVIDIA 驱动和 `nvidia-smi`。工具只使用 Python 标准库。
 
-## 设置入口
+## 在 ink_pde 中安装（一次即可）
 
-在需要使用的终端中定义函数（只影响当前 Shell，不修改启动配置）：
+激活训练环境，以可编辑模式安装：
 
 ```bash
-tq() { python /home/lsc/project/claude_code/train-queue/tq.py "$@"; }
+conda activate ink_pde
+python -m pip install -e /home/lsc/project/claude_code/train-queue
+tq --help
 ```
 
-也可始终使用 `python /home/lsc/project/claude_code/train-queue/tq.py` 替代 `tq`。
+以后新开终端只需 `conda activate ink_pde`，即可直接使用 `tq`，无需定义 Shell 函数或填写脚本路径。可编辑安装直接引用项目源码，修改代码后无需重新安装；移动项目目录或修改安装入口时重新执行安装命令。
+
+如果当前终端曾定义过旧的 `tq` 函数，可执行 `unset -f tq`，让 Shell 使用安装后的命令。
 
 ## 开始一组实验
 
@@ -26,9 +30,10 @@ tq work pair-a --gpus 2,3 --monitor-gpu 0
 
 卡号仅为示例。执行器会一直等待任务；脱离 tmux 不影响执行，但不要关闭执行器所在的窗口。
 
-在另一个终端定义同一个 `tq` 函数，追加原来的训练命令：
+在另一个终端激活同一环境，追加原来的训练命令：
 
 ```bash
+conda activate ink_pde
 tq add pair-a --command \
   'EXP_NAME=experiment_a bash tasks/rectified_flow/train_rain100h_noise_cond.sh'
 
@@ -38,7 +43,7 @@ tq add pair-a --command \
 tq list pair-a
 ```
 
-任务使用 **work 执行窗口启动时的环境**。追加终端无需激活训练环境，只需要 Python 3.10+。换环境时，在目标环境中重启执行器。
+任务使用 **work 执行窗口启动时的环境**。追加终端也可以直接使用 `/home/lsc/anaconda3/envs/ink_pde/bin/tq`，无需激活环境。换训练环境时，在目标环境中安装本工具并重启执行器。
 
 任务默认在该组配置的工作目录运行，追加终端的当前目录不影响它；可通过 `add --cwd /项目目录` 单独覆盖。每条命令是一段完整 Bash 脚本，支持变量前缀、循环、多行内容。复杂命令也可用 `--command "$(cat command.txt)"` 传入。
 
@@ -125,7 +130,7 @@ tq work pair-a --resume
 自定义目录放在子命令前；所有终端须使用同一目录才能共享队列和锁：
 
 ```bash
-python /home/lsc/project/claude_code/train-queue/tq.py --data-dir /tmp/tq-test list
+tq --data-dir /tmp/tq-test list
 ```
 
 ## 验证与旧版
